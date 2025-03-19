@@ -1,32 +1,31 @@
+const vw = document.documentElement.clientWidth - 50;
+const vh = document.documentElement.clientHeight - 50;
+
 // configuration
 const config = {
-    canvasWidth: 1400,
-    canvasHeight: 1200,
-    canvasMargin: 0,
-    columns: 10,
-    cellWidth: 90,
-    cellHeight: 110,
+    canvasWidth: vw,
+    canvasHeight: vh,
+    canvasMargin: 10,
     imageSize: 64,
     imageSizeMax: 256,
     xOffset: 25,
     yOffset: 30,
-    marginTop: 100,
-    marginRight: 50,
-    marginBottom: 50,
-    marginLeft: 50
+    marginTop: vh / 15,
+    marginRight: vh / 15,
+    marginBottom: vh / 15,
+    marginLeft: vh / 20
   };
 
 // Create SVG element inside the div with id "canvas"
 var svg = d3.select("#canvas")
   .append("svg")
   .attr("width", config.canvasWidth)
-  .attr("height", config.canvasHeight);
+  .attr("height", config.canvasHeight)
 
 svg.append("image")
     .attr("xlink:href", "background.png")
     .attr("width", config.canvasWidth)
     .attr("height", config.canvasHeight)
-
 
 const typeColors = {
     normal: "#A8A878",
@@ -49,23 +48,20 @@ const typeColors = {
     fairy: "#EE99AC"
   };
 
-// Load Pokémon data
-d3.csv("pokedex.csv").then(pokemonData => {
-  // Filter to first 151 Pokémon
-  const kanto = pokemonData.filter(d => +d.id <= 151);
-  
+
   const typeScale = d3.scaleOrdinal()
   .range(Array.from(Object.values(typeColors)))
   .domain(Array.from(Object.keys(typeColors)))
 
+  
 //   X Scale
     const speedScale = d3.scaleLinear()
-    .range([config.canvasMargin, (config.canvasWidth - config.canvasMargin)])
+    .range([config.canvasMargin, (config.canvasWidth - config.marginRight)])
     .domain([0, 150])
 
 // Y Scale
     const weightScale = d3.scaleLinear()
-    .range([config.marginTop, (config.canvasHeight - config.canvasMargin)])
+    .range([config.marginTop, (config.canvasHeight - config.marginBottom)])
     .domain([0, 3000])
 
 // Size Scale
@@ -137,6 +133,11 @@ d3.csv("pokedex.csv").then(pokemonData => {
     .style("font-size", "12px")
     .text("Max Weight");
 
+// Load Pokémon data
+d3.csv("pokedex.csv").then(pokemonData => {
+  // Filter to first 151 Pokémon
+  const kanto = pokemonData.filter(d => +d.id <= 151);
+
 // Create places for pokemon placement on x / y  
     const graph = svg.selectAll(".pokemon-cell")
     .data(kanto)
@@ -147,34 +148,16 @@ d3.csv("pokedex.csv").then(pokemonData => {
         return `translate(${speedScale(d.speed)}, ${weightScale(d.weight)})`;
     });
 
-    
-  // Create group elements for each Pokémon
-//   const cells = svg.selectAll(".pokemon-cell")
-//     .data(kanto)
-//     .enter()
-//     .append("g")
-//     .attr("class", "pokemon-cell")
-//     .attr("transform", (d, i) => {
-//       const row = Math.floor(i / config.columns);
-//       const col = i % config.columns;
-//       return `translate(${col * config.cellWidth + config.xOffset}, ${row * config.cellHeight + config.yOffset})`;
-//     });
-  
   // Add images to each cell
   graph.append("image")
     .attr("xlink:href", d => `/pokemon/${d.id}.png`)
     .attr("width", d => sizeScale(d.height))
     .attr("height", d => sizeScale(d.height))
-    .attr("x", (config.cellWidth - config.imageSize) / 2)
-  
-  // Add text for Pokémon names to each cell
-//   graph.append("text")
-//     .attr("class", "pokemon-name")
-//     .attr("x", config.cellWidth / 2)
-//     .attr("y", config.imageSize + 15)
-//     .attr("text-anchor", "middle")
-//     .text(d => d.name);
-// }).catch(error => {
-//   console.error("Error loading the CSV file:", error);
-//   d3.select("body").append("p").text("Error loading data. Check console for details.");
+
+  graph.append("circle")
+    .style("fill", d => typeScale(d.type))
+    .attr("r", 10)
+  graph.append("text")
+    .text(d => d.name)
+    .style("font-size", 10)
 });
